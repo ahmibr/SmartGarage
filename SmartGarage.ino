@@ -35,9 +35,9 @@ const long OPEN_SECONDS_THRESHOLD = 3;
 
 void play_door_alarm(){
   digitalWrite(PIN_SPEAKER, HIGH);
-  delay(200);
+  delay(400);
   digitalWrite(PIN_SPEAKER, LOW);
-  delay(200);
+  delay(500);
 }
 
 bool is_open_overdue(){
@@ -49,7 +49,7 @@ bool is_open_overdue(){
 
 void setup() {
     setup_entry_servo();
-  Serial.begin(9600);
+	Serial.begin(9600);
     pinMode(pushButton, INPUT);
     pinMode(PIN_SPEAKER, OUTPUT);
 }

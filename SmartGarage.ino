@@ -202,5 +202,5 @@ void loop()
 		ir_recv.resume();	// Receive the next value
 	}
 
-	delay(150);
+	delay(50);
 }

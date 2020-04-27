@@ -173,6 +173,7 @@ void loop()
 
 	if (is_alarm_overdue() && !car_in_range)
 	{
+		stop_door_alarm();
 		close_door();
 		door_is_open = false;
 	}

@@ -11,64 +11,67 @@ const int PIN_IR = 2;
 const int PIN_RESET_BUTTON = 5;
 /*************************************/
 /*    Servo constants    */
-const int SERVO_SETUP_TIME = 2000;
-const int ENTRY_SERVO_CLOSED_VALUE = 90;
-const int ENTRY_SERVO_OPEN_VALUE = 0;
-const long OPEN_DOOR_TIME_THRESHOLD = 2000;
+const int SERVO_SETUP_TIME = 2000; //time needed for servo to reach a point
+const int ENTRY_SERVO_CLOSED_VALUE = 90; //servo angle at which door closes
+const int ENTRY_SERVO_OPEN_VALUE = 0; //servo angle at which door opens
+const long OPEN_DOOR_TIME_THRESHOLD = 2000; //max time a door can still be open before trigger alarm
 /*************************************/
 /*    IR constants        */
-const long IR_COMMAND_VALUE = 16580863;
+const long IR_COMMAND_VALUE = 16580863; //value should be received by remote
 /*************************************/
 /*    Alarm constants     */
-const long ACTIVE_ALARM_THRESHOLD = 2.5 * OPEN_DOOR_TIME_THRESHOLD;
-const long ALARM_HIGH_SIGNAL_TIME = 200;
-const long ALARM_LOW_SIGNAL_TIME = ALARM_HIGH_SIGNAL_TIME *1.5;
+const long ACTIVE_ALARM_THRESHOLD = 2.5 * OPEN_DOOR_TIME_THRESHOLD; //max time an alarm should ring before closing door
+const long ALARM_HIGH_SIGNAL_TIME = 200; //time an alarm have high signal
+const long ALARM_LOW_SIGNAL_TIME = ALARM_HIGH_SIGNAL_TIME *1.5; //time an alarm have low signal
 /*************************************/
 /*    Ultrasonic constants     */
-const int ULTRASONIC_MAX_VALUE = 300;
+const int ULTRASONIC_MAX_VALUE = 300; //ultrasonic max range
 /*************************************/
 /*    Reset button constants     */
-const int RESET_BUTTON_HOLD_TIME = 3000;
+const int RESET_BUTTON_HOLD_TIME = 3000; //time a user should hold to reset
 /*************************************/
 
 /***************Variables*******************/
 
 /*    Servo variables         */
-Servo entry_servo;
+Servo entry_servo; //servo variable
 bool door_is_open = false;
-unsigned long last_open_time = 0;
+unsigned long last_open_time = 0; //last time the door was open
 
 /*     IR variables           */
-IRrecv ir_recv(PIN_IR);
-decode_results ir_result;
+IRrecv ir_recv(PIN_IR); //IR receiver variable
+decode_results ir_result; //variable to hold reading from IR
 
 /*    Alarm variables         */
-unsigned long last_alarm_high_time = 0;
-unsigned long last_alarm_low_time = 0;
-bool alarm_signal_high = false;
+unsigned long last_alarm_high_time = 0; //variable to hold time high time interval
+unsigned long last_alarm_low_time = 0; //variable to hold time low time interval
+bool alarm_signal_high = false; //variable to hold alarm state
 
 /*    Ultrasonic variables    */
-int ultrasonic_reading;
-long ultrasonic_duration;
-bool car_in_range = false;
+int ultrasonic_reading; //variable to hold ultrasonic reading
+long ultrasonic_duration; //utility variable to calculate ultrasonic reading
+bool car_in_range = false; //if car in range of ultrasonic
 
 /*    Reset variables    */
-int reset_button_state = 0;
-long int start_pressing_time = 0;
+int reset_button_state = 0; //variable to hold reset button state
+long int start_pressing_time = 0; //variable to calculate reset button holding time
 /***************Functions*******************/
 
+// A function to send signal to servo to open the door
 void open_door()
 {
 	entry_servo.write(ENTRY_SERVO_OPEN_VALUE);
 	delay(SERVO_SETUP_TIME);
 }
 
+// A function to send signal to servo to close the door
 void close_door()
 {
 	entry_servo.write(ENTRY_SERVO_CLOSED_VALUE);
 	delay(SERVO_SETUP_TIME);
 }
 
+// A function to setup servo at begining
 void setup_entry_servo()
 {
 	entry_servo.attach(PIN_ENTRY_SERVO);
@@ -77,6 +80,7 @@ void setup_entry_servo()
 	delay(SERVO_SETUP_TIME);
 }
 
+// A function to manage alarm sound
 void play_door_alarm()
 {
 	if (alarm_signal_high)
@@ -101,6 +105,7 @@ void play_door_alarm()
 	delay(10);
 }
 
+// A function to stop alarm from ringing
 void stop_door_alarm()
 {
 	digitalWrite(PIN_SPEAKER, LOW);
@@ -110,6 +115,7 @@ void stop_door_alarm()
 	delay(10);
 }
 
+// A function to check if door is open for more than specific time
 bool is_open_overdue()
 {
 	if (door_is_open && (millis() - last_open_time > OPEN_DOOR_TIME_THRESHOLD))
@@ -118,6 +124,7 @@ bool is_open_overdue()
 	return false;
 }
 
+// A function to check if alarm is rining for more than specific time
 bool is_alarm_overdue()
 {
 	if (door_is_open && (millis() - last_open_time > ACTIVE_ALARM_THRESHOLD))
@@ -126,6 +133,7 @@ bool is_alarm_overdue()
 	return false;
 }
 
+// A function to read ultrasonic reading
 int read_ultrasonic()
 {
 	digitalWrite(PIN_ULTRASONIC_TRIGGER, LOW);
@@ -141,6 +149,7 @@ int read_ultrasonic()
 	return (ultrasonic_duration / 2) *0.0446;
 }
 
+// A function to reset program
 void reset()
 {
 	stop_door_alarm();
@@ -165,11 +174,14 @@ void setup()
 
 void loop()
 {
+
+	// if reset button is pressed
 	reset_button_state = digitalRead(PIN_RESET_BUTTON);
 	if (reset_button_state == 1)
 	{
 		delay(10);	//bouncing effect
 
+		// check if it's still pressed for a certain amount of time
 		start_pressing_time = millis();
 		while (reset_button_state == 1 && millis() - start_pressing_time < RESET_BUTTON_HOLD_TIME)
 		{
@@ -177,6 +189,7 @@ void loop()
 			reset_button_state = digitalRead(PIN_RESET_BUTTON);
 		}
 
+		// if time passed and it's still pressed
 		if (reset_button_state == 1)
 		{
 			reset();
@@ -188,6 +201,7 @@ void loop()
 	Serial.println("Read from Ultrasonic");
 	Serial.println(ultrasonic_reading);
 
+	// if a car detected in range
 	if (ultrasonic_reading < ULTRASONIC_MAX_VALUE)
 	{
 		if (door_is_open)
@@ -197,6 +211,10 @@ void loop()
 	}
 	else
 	{
+		// ultrasonic read that no object in range
+		// so when it has read before that there were an object
+		// that means the car was passing and it successfully passed
+		// so close the door
 		if (car_in_range)
 		{
 			close_door();
@@ -204,11 +222,14 @@ void loop()
 		}
 	}
 
+	// if door was open for a long time (user opened door and didn't pass nor close door)
 	if (is_open_overdue())
 	{
 		play_door_alarm();
 	}
 
+	// if alarm was ringing for a long time, close the door
+	// unless a car was in servo path
 	if (is_alarm_overdue() && !car_in_range)
 	{
 		stop_door_alarm();
@@ -216,11 +237,13 @@ void loop()
 		door_is_open = false;
 	}
 
+	// check if a signal was sent from IR
 	if (ir_recv.decode(&ir_result))
 	{
 		Serial.println("Received from IR");
 		Serial.println(ir_result.value);
 
+		// if the value received is the wanted signal
 		if (ir_result.value == IR_COMMAND_VALUE)
 		{
 			if (door_is_open)
@@ -236,8 +259,10 @@ void loop()
 				last_open_time = millis();
 			}
 		}
-
-		ir_recv.resume();	// Receive the next value
+		
+		// Receive the next value
+		// required to reset IR sensor
+		ir_recv.resume();	
 	}
 
 	delay(50);

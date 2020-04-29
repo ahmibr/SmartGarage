@@ -2,52 +2,59 @@
 #include <IRremote.h>
 
 /***************Constants*******************/
-/*     Pins     */
+/*    Pins     */
 const int PIN_ENTRY_SERVO = 9;
 const int PIN_ULTRASONIC_TRIGGER = 4;
 const int PIN_ULTRASONIC_ECHO = 3;
 const int PIN_SPEAKER = 10;
 const int PIN_IR = 2;
+const int PIN_RESET_BUTTON = 5;
 /*************************************/
-/*     Servo constants    */
+/*    Servo constants    */
 const int SERVO_SETUP_TIME = 2000;
 const int ENTRY_SERVO_CLOSED_VALUE = 90;
 const int ENTRY_SERVO_OPEN_VALUE = 0;
-const long OPEN_DOOR_TIME_THRESHOLD = 10000;
+const long OPEN_DOOR_TIME_THRESHOLD = 2000;
 /*************************************/
-/*     IR constants        */
+/*    IR constants        */
 const long IR_COMMAND_VALUE = 16580863;
 /*************************************/
-/*     Alarm constants     */
+/*    Alarm constants     */
 const long ACTIVE_ALARM_THRESHOLD = 2.5 * OPEN_DOOR_TIME_THRESHOLD;
 const long ALARM_HIGH_SIGNAL_TIME = 200;
 const long ALARM_LOW_SIGNAL_TIME = ALARM_HIGH_SIGNAL_TIME *1.5;
 /*************************************/
-/*     Ultrasonic constants     */
+/*    Ultrasonic constants     */
 const int ULTRASONIC_MAX_VALUE = 300;
+/*************************************/
+/*    Reset button constants     */
+const int RESET_BUTTON_HOLD_TIME = 3000;
 /*************************************/
 
 /***************Variables*******************/
 
-/*     Servo variables         */
+/*    Servo variables         */
 Servo entry_servo;
 bool door_is_open = false;
 unsigned long last_open_time = 0;
 
-/*      IR variables           */
+/*     IR variables           */
 IRrecv ir_recv(PIN_IR);
 decode_results ir_result;
 
-/*     Alarm variables         */
+/*    Alarm variables         */
 unsigned long last_alarm_high_time = 0;
 unsigned long last_alarm_low_time = 0;
 bool alarm_signal_high = false;
 
-/*     Ultrasonic variables    */
+/*    Ultrasonic variables    */
 int ultrasonic_reading;
 long ultrasonic_duration;
 bool car_in_range = false;
 
+/*    Reset variables    */
+int reset_button_state = 0;
+long int start_pressing_time = 0;
 /***************Functions*******************/
 
 void open_door()
@@ -134,6 +141,18 @@ int read_ultrasonic()
 	return (ultrasonic_duration / 2) *0.0446;
 }
 
+void reset()
+{
+	stop_door_alarm();
+	close_door();
+	door_is_open = false;
+	last_open_time = 0;
+	last_alarm_high_time = 0;
+	last_alarm_low_time = 0;
+	alarm_signal_high = false;
+	car_in_range = false;
+}
+
 void setup()
 {
 	Serial.begin(9600);
@@ -146,6 +165,25 @@ void setup()
 
 void loop()
 {
+	reset_button_state = digitalRead(PIN_RESET_BUTTON);
+	if (reset_button_state == 1)
+	{
+		delay(10);	//bouncing effect
+
+		start_pressing_time = millis();
+		while (reset_button_state == 1 && millis() - start_pressing_time < RESET_BUTTON_HOLD_TIME)
+		{
+			delay(20);
+			reset_button_state = digitalRead(PIN_RESET_BUTTON);
+		}
+
+		if (reset_button_state == 1)
+		{
+			reset();
+			return;
+		}
+	}
+
 	ultrasonic_reading = read_ultrasonic();
 	Serial.println("Read from Ultrasonic");
 	Serial.println(ultrasonic_reading);

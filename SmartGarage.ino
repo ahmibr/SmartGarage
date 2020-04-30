@@ -14,7 +14,7 @@ const int PIN_RESET_BUTTON = 5;
 const int SERVO_SETUP_TIME = 2000; //time needed for servo to reach a point
 const int ENTRY_SERVO_CLOSED_VALUE = 90; //servo angle at which door closes
 const int ENTRY_SERVO_OPEN_VALUE = 0; //servo angle at which door opens
-const long OPEN_DOOR_TIME_THRESHOLD = 2000; //max time a door can still be open before trigger alarm
+const long OPEN_DOOR_TIME_THRESHOLD = 3000; //max time a door can still be open before trigger alarm
 /*************************************/
 /*    IR constants        */
 const long IR_COMMAND_VALUE = 16580863; //value should be received by remote
@@ -28,7 +28,7 @@ const long ALARM_LOW_SIGNAL_TIME = ALARM_HIGH_SIGNAL_TIME *1.5; //time an alarm 
 const int ULTRASONIC_MAX_VALUE = 300; //ultrasonic max range
 /*************************************/
 /*    Reset button constants     */
-const int RESET_BUTTON_HOLD_TIME = 3000; //time a user should hold to reset
+const int RESET_BUTTON_HOLD_TIME = 2000; //time a user should hold to reset
 /*************************************/
 
 /***************Variables*******************/
@@ -169,6 +169,7 @@ void setup()
 	pinMode(PIN_SPEAKER, OUTPUT);
 	pinMode(PIN_ULTRASONIC_TRIGGER, OUTPUT);
 	pinMode(PIN_ULTRASONIC_ECHO, INPUT);
+	pinMode(PIN_RESET_BUTTON, INPUT);
 	ir_recv.enableIRIn();
 }
 
@@ -198,8 +199,6 @@ void loop()
 	}
 
 	ultrasonic_reading = read_ultrasonic();
-	Serial.println("Read from Ultrasonic");
-	Serial.println(ultrasonic_reading);
 
 	// if a car detected in range
 	if (ultrasonic_reading < ULTRASONIC_MAX_VALUE)

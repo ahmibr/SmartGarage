@@ -180,22 +180,7 @@ void loop()
 	reset_button_state = digitalRead(PIN_RESET_BUTTON);
 	if (reset_button_state == 1)
 	{
-		delay(10);	//bouncing effect
-
-		// check if it's still pressed for a certain amount of time
-		start_pressing_time = millis();
-		while (reset_button_state == 1 && millis() - start_pressing_time < RESET_BUTTON_HOLD_TIME)
-		{
-			delay(20);
-			reset_button_state = digitalRead(PIN_RESET_BUTTON);
-		}
-
-		// if time passed and it's still pressed
-		if (reset_button_state == 1)
-		{
-			reset();
-			return;
-		}
+		reset();
 	}
 
 	ultrasonic_reading = read_ultrasonic();

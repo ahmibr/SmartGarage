@@ -217,7 +217,9 @@ void loop()
 		// so close the door
 		if (car_in_range)
 		{
+			stop_door_alarm();
 			close_door();
+			car_in_range = false;
 			door_is_open = false;
 		}
 	}
@@ -234,6 +236,7 @@ void loop()
 	{
 		stop_door_alarm();
 		close_door();
+		car_in_range = false;
 		door_is_open = false;
 	}
 
@@ -250,6 +253,7 @@ void loop()
 			{
 				stop_door_alarm();
 				close_door();
+				car_in_range = false;
 				door_is_open = false;
 			}
 			else
